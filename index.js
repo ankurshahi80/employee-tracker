@@ -1,5 +1,6 @@
 // Connect to the MySQL Database
 const mysql = require('mysql2');
+const cTable = require('console.table');
 const inquirer = require('inquirer');
 
 const db = mysql.createConnection(
@@ -12,16 +13,20 @@ const db = mysql.createConnection(
 );
 
 const mainMenu = [
-    'View All Employees',
-    'View All Employees By Department',
-    'View All Employees By Manager',
-    'Add Employee',
-    'Remove Employee',
-    'Update Employee Role',
-    'Update Employee Manager',
+    'View All Departments',
     'View All Roles',
-    'Add Role',
+    'View All Employees',
+    'Add A Department',
+    'Add A Role',
+    'Add An Employee',
+    'Update An Employee Role',
+    'Update Employee Manager',
+    'View Employees By Manager',
+    'View Employees By Department',
+    'Remove Employee',
     'Remove Role',
+    'Remove Department',
+    'Total Utilized Budget'
 ]
     
 const promptUser = () => {
@@ -34,17 +39,20 @@ const promptUser = () => {
                 choices: mainMenu
             }
         ]
-    ) 
+    )
+    .then(answer=>chooseCase(answer))
+    .catch(error=>console.log(error)); 
 }
 
 const chooseCase = (answer)=>{
     let choice = answer.choice;
     switch(choice) {
         case "View All Employees":
-        console.log("View All Employees");
+        
         db.query(`SELECT employee.id,employee.first_name,employee.last_name,role.title,department.name as department, role.salary, CONCAT(e.first_name,' ',e.last_name) AS manager
         FROM employee INNER JOIN role ON role.id = employee.role_id INNER JOIN department on department.id = role.department_id  LEFT JOIN employee e ON employee.manager_id=e.id ORDER BY id;`,(err,rows)=>{
-            console.log(rows)
+            console.table(rows);
+            promptUser();
         });
         break;
 
@@ -90,5 +98,3 @@ const chooseCase = (answer)=>{
 }
 
 promptUser()
-    .then(answer=>chooseCase(answer))
-    .catch(error=>console.log(error));
