@@ -42,7 +42,8 @@ const chooseCase = (answer)=>{
     switch(choice) {
         case "View All Employees":
         console.log("View All Employees");
-        db.query(`SELECT * FROM employee`,(err,rows)=>{
+        db.query(`SELECT employee.id,employee.first_name,employee.last_name,role.title,department.name as department, role.salary, CONCAT(e.first_name,' ',e.last_name) AS manager
+        FROM employee INNER JOIN role ON role.id = employee.role_id INNER JOIN department on department.id = role.department_id  LEFT JOIN employee e ON employee.manager_id=e.id ORDER BY id;`,(err,rows)=>{
             console.log(rows)
         });
         break;
