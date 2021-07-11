@@ -47,9 +47,26 @@ const promptUser = () => {
 const chooseCase = (answer)=>{
     let choice = answer.choice;
     switch(choice) {
+        case "View All Departments":
+        
+        db.query(`SELECT id,department.name as department
+        FROM department`,(err,rows)=>{
+            console.table(rows);
+            promptUser();
+        });
+        break;
+
+        case "View All Roles":
+        db.query(`SELECT role.id as 'role id', role.title as 'job title', department.name as department, role.salary
+        FROM role
+        INNER JOIN department ON department.id =role.department_id;`,(err,rows)=>{
+            console.table(rows);
+            promptUser();
+        });
+        break;
         case "View All Employees":
         
-        db.query(`SELECT employee.id,employee.first_name,employee.last_name,role.title,department.name as department, role.salary, CONCAT(e.first_name,' ',e.last_name) AS manager
+        db.query(`SELECT employee.id,employee.first_name,employee.last_name,role.title as 'job title',department.name as department, role.salary, CONCAT(e.first_name,' ',e.last_name) AS manager
         FROM employee INNER JOIN role ON role.id = employee.role_id INNER JOIN department on department.id = role.department_id  LEFT JOIN employee e ON employee.manager_id=e.id ORDER BY id;`,(err,rows)=>{
             console.table(rows);
             promptUser();
@@ -78,10 +95,6 @@ const chooseCase = (answer)=>{
 
         case "Update Employee Manager":
         console.log("Update Employee Manager");
-        break;
-
-        case "View All Roles":
-        console.log("View All Roles");
         break;
 
         case "Add Role":
