@@ -12,6 +12,28 @@ const con = mysql.createConnection(
     console.log('Connected to the organization database.')
 );
 
+const getEmp = ()=>{
+    const empArray = [];
+    con.query(`SELECT CONCAT(first_name,' ',last_name) AS name FROM employee;`,(err,rows)=>{
+        for (let i=0;i<rows.length;i++){
+            empArray.push(rows[i].name);
+        }
+    console.log (empArray);
+    return empArray;
+    });
+}
+
+const getRole = ()=>{
+    const roleArray = [];
+    con.query(`SELECT title FROM role;`,(err,rows)=>{
+        for (let i=0;i<rows.length;i++){
+            roleArray.push(rows[i].title);
+        }
+        console.log(roleArray);
+        return roleArray;
+    }); 
+}
+
 const mainMenu = [
     'View All Departments',
     'View All Roles',
@@ -90,7 +112,6 @@ getDeptID = (answer)=> {
     .then(([rows,fields])=>{
         const dept = rows[0].id;
         const params=[answer.name,answer.salary,dept]
-        console.log(params);
         con.query(`INSERT INTO role (title,salary,department_id) VALUES (?,?,?);`,params ,(err,rows)=>{
             promptUser();
         });
@@ -138,7 +159,7 @@ const addEmployee = ()=>{
     );
 }
 
-getEmployee = (answer)=> {
+const getEmployee = (answer)=> {
     console.log(answer);
     con.promise().query(`SELECT * FROM role WHERE title=?`,answer.role)
     .then(([rows,fields])=>{
@@ -157,6 +178,14 @@ getEmployee = (answer)=> {
         });
     });  
 };
+
+const updateRole = ()=> {
+
+    const emp = getEmp();
+    const role= getRole();
+    console.log(emp,role);
+}
+
 const chooseCase = (answer)=>{
     let choice = answer.choice;
     switch(choice) {
@@ -188,9 +217,7 @@ const chooseCase = (answer)=>{
 
         case "Add A Department":
             addDept().then(answer=>{
-                console.log(answer.name);
                 con.query(`INSERT INTO department (name) VALUES (?);`,answer.name ,(err,rows)=>{
-                    console.table(rows);
                     promptUser();
                 });
             });
@@ -208,16 +235,16 @@ const chooseCase = (answer)=>{
             })
         break;
 
+        case "Update An Employee Role":
+            updateRole();
+        break;
+
         case "View All Employees By Manager":
         console.log("View All Employees By Manager");
         break;
 
         case "Remove Employee":
         console.log("Remove Employee");
-        break;
-
-        case "Update Employee Role":
-        console.log("Update Employee Role");
         break;
 
         case "Update Employee Manager":
