@@ -2,7 +2,9 @@
 const mysql = require('mysql2');
 const cTable = require('console.table');
 const inquirer = require('inquirer');
+// const { async } = require('rxjs');
 
+// Create Connection
 const con = mysql.createConnection(
     {
         user:'root',
@@ -11,6 +13,47 @@ const con = mysql.createConnection(
     },
     console.log('Connected to the organization database.')
 );
+
+const getEmpIdFromName = async (empName) => {
+    const name = empName.split(" ");
+    console.log(name);
+    query="SELECT id FROM employee WHERE ((first_name = ?) AND (last_name = ?));";
+    const[rows, field]=await con.promise().query(query,name);
+    const id = rows[0].id;
+    return id;
+}
+
+const getRoleIdFromRoleName = async (roleName) => {
+    const role = roleName;
+    query="SELECT id FROM role WHERE title = ?;";
+    const [rows, field] = await con.promise().query(query,role);
+    const id = rows[0].id;
+    return id;
+}
+
+const getEmpName = async () =>{
+    const empArray = [];
+    let query= "SELECT CONCAT(first_name,' ',last_name) AS name FROM employee;"
+    const [rows,field] = await con.promise().query(query);
+    for (let i=0;i<rows.length;i++){
+        empArray.push(rows[i].name);
+    }
+    return empArray;
+};
+
+const getEmpRole = async () =>{
+    const roleArray = [];
+    let query= "SELECT title FROM role;"
+    const [rows,field] = await con.promise().query(query);
+    for (let i=0;i<rows.length;i++){
+        roleArray.push(rows[i].title);
+    }
+    return roleArray;
+};
+
+// const getNameFromEmp = ()=>{
+//     return con.promise().query(`SELECT CONCAT(first_name,' ',last_name) AS name FROM employee;`);
+// }
 
 const getEmp = ()=>{
     const empArray = [];
@@ -179,11 +222,54 @@ const getEmployee = (answer)=> {
     });  
 };
 
-const updateRole = ()=> {
+const updateRole = async ()=> {
+    // get the names of the existing empoyees from the database
+    // use await to populate the variable
+    const emp = await getEmpName();
 
-    const emp = getEmp();
-    const role= getRole();
-    console.log(emp,role);
+    // get the titles of the exisitng roles from the database
+    // use await to populate the variable
+    const role= await getEmpRole();
+
+    // prompt the user to select the employee and the new role
+    return inquirer
+        .prompt([
+            {
+                type: "list",
+                name: "emp",
+                message: "Select the employee to update:",
+                choices: emp
+            },
+            {
+                type: "list",
+                name: "role",
+                message: "Select the employee role.",
+                choices: role
+            }
+        ]).
+        then(answer=>{
+
+            // pass the user response to write function to update the new role.
+            updateNewRole(answer);
+        })
+}
+
+const updateNewRole = async (answer) =>{
+    console.log(answer);
+    // get the employee id of the new role to update.
+    const empIdtoUpdate = await getEmpIdFromName(answer.emp);
+
+    const getRoleToUpdate = await getRoleIdFromRoleName(answer.role);         
+
+    // set the passing pararmeters for the perepared query
+    let params=[getRoleToUpdate,empIdtoUpdate];
+    // prepare query
+    let query = `UPDATE employee SET role_id = ? WHERE id = ?;`;
+    // call perepared query
+    con.query(query,params);
+    
+    // send the user to the main menu
+    promptUser();
 }
 
 const chooseCase = (answer)=>{
