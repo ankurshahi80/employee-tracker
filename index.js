@@ -14,15 +14,16 @@ const con = mysql.createConnection(
     console.log('Connected to the organization database.')
 );
 
+// async function to return emp id from the concatanated name
 const getEmpIdFromName = async (empName) => {
     const name = empName.split(" ");
-    console.log(name);
     query="SELECT id FROM employee WHERE ((first_name = ?) AND (last_name = ?));";
     const[rows, field]=await con.promise().query(query,name);
     const id = rows[0].id;
     return id;
 }
 
+// async function to return the role id from role name
 const getRoleIdFromRoleName = async (roleName) => {
     const role = roleName;
     query="SELECT id FROM role WHERE title = ?;";
@@ -31,6 +32,7 @@ const getRoleIdFromRoleName = async (roleName) => {
     return id;
 }
 
+// async function to get a list of all the employee names from the database
 const getEmpName = async () =>{
     const empArray = [];
     let query= "SELECT CONCAT(first_name,' ',last_name) AS name FROM employee;"
@@ -41,6 +43,7 @@ const getEmpName = async () =>{
     return empArray;
 };
 
+// async function to get a list of all the role titles from the database
 const getEmpRole = async () =>{
     const roleArray = [];
     let query= "SELECT title FROM role;"
@@ -51,32 +54,7 @@ const getEmpRole = async () =>{
     return roleArray;
 };
 
-// const getNameFromEmp = ()=>{
-//     return con.promise().query(`SELECT CONCAT(first_name,' ',last_name) AS name FROM employee;`);
-// }
-
-const getEmp = ()=>{
-    const empArray = [];
-    con.query(`SELECT CONCAT(first_name,' ',last_name) AS name FROM employee;`,(err,rows)=>{
-        for (let i=0;i<rows.length;i++){
-            empArray.push(rows[i].name);
-        }
-    console.log (empArray);
-    return empArray;
-    });
-}
-
-const getRole = ()=>{
-    const roleArray = [];
-    con.query(`SELECT title FROM role;`,(err,rows)=>{
-        for (let i=0;i<rows.length;i++){
-            roleArray.push(rows[i].title);
-        }
-        console.log(roleArray);
-        return roleArray;
-    }); 
-}
-
+// main menu array
 const mainMenu = [
     'View All Departments',
     'View All Roles',
@@ -93,7 +71,8 @@ const mainMenu = [
     'Remove Department',
     'Total Utilized Budget'
 ]
-    
+
+// Starting Prompt
 const promptUser = () => {
     return inquirer.prompt(
         [
@@ -109,6 +88,7 @@ const promptUser = () => {
     .catch(error=>console.log(error)); 
 }
 
+// Adding a department prompt
 const addDept = ()=>{
     return inquirer.prompt(
         [
@@ -121,6 +101,7 @@ const addDept = ()=>{
     );
 }
 
+// Adding a role prompt
 const addRole = ()=>{
     const deptArray = [];
     con.query(`SELECT * FROM department;`,(err,rows)=>{
@@ -161,19 +142,11 @@ getDeptID = (answer)=> {
     }); 
 };
 
-const addEmployee = ()=>{
-    const roleArray = [];
-    const managerArray =[];
-    con.query(`SELECT title FROM role;`,(err,rows)=>{
-        for (let i=0;i<rows.length;i++){
-            roleArray.push(rows[i].title);
-        }
-    }); 
-    con.query(`SELECT CONCAT(first_name,' ',last_name) AS name FROM employee;`,(err,rows)=>{
-        for (let i=0;i<rows.length;i++){
-            managerArray.push(rows[i].name);
-        }
-    });     
+const addEmployee = async () => {
+    
+    const roleArray= await getEmpRole();
+    const managerArray= await getEmpName();
+        
     return inquirer.prompt(
         [
             {
@@ -203,18 +176,14 @@ const addEmployee = ()=>{
 }
 
 const getEmployee = (answer)=> {
-    console.log(answer);
     con.promise().query(`SELECT * FROM role WHERE title=?`,answer.role)
     .then(([rows,fields])=>{
         const role = rows[0].id;
         let managerParams=answer.manager.split(" ");
-        console.log(managerParams);
         con.promise().query(`SELECT * FROM employee WHERE ((first_name = ?) AND (last_name = ?))`,managerParams)
         .then(([rows,field])=>{
-            console.log(rows);
             const manager = rows[0].id;
-            const params=[answer.first_name,answer.last_name,role,manager]
-            console.log(params);
+            const params=[answer.first_name,answer.last_name,role,manager];
             con.query(`INSERT INTO employee (first_name,last_name,role_id, manager_id) VALUES (?,?,?,?);`,params ,(err,rows)=>{
                 promptUser();
             });
@@ -255,10 +224,8 @@ const updateRole = async ()=> {
 }
 
 const updateNewRole = async (answer) =>{
-    console.log(answer);
-    // get the employee id of the new role to update.
+    
     const empIdtoUpdate = await getEmpIdFromName(answer.emp);
-
     const getRoleToUpdate = await getRoleIdFromRoleName(answer.role);         
 
     // set the passing pararmeters for the perepared query
