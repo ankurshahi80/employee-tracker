@@ -175,20 +175,13 @@ const addEmployee = async () => {
     );
 }
 
-const getEmployee = (answer)=> {
-    con.promise().query(`SELECT * FROM role WHERE title=?`,answer.role)
-    .then(([rows,fields])=>{
-        const role = rows[0].id;
-        let managerParams=answer.manager.split(" ");
-        con.promise().query(`SELECT * FROM employee WHERE ((first_name = ?) AND (last_name = ?))`,managerParams)
-        .then(([rows,field])=>{
-            const manager = rows[0].id;
-            const params=[answer.first_name,answer.last_name,role,manager];
-            con.query(`INSERT INTO employee (first_name,last_name,role_id, manager_id) VALUES (?,?,?,?);`,params ,(err,rows)=>{
-                promptUser();
-            });
-        });
-    });  
+const getEmployee = async (answer)=> {
+    const role = await getRoleIdFromRoleName(answer.role);
+    const manager = await getEmpIdFromName(answer.manager);  
+    const params=[answer.first_name,answer.last_name,role,manager];
+    let query = `INSERT INTO employee (first_name,last_name,role_id, manager_id) VALUES (?,?,?,?);`;
+    con.query(query,params);    
+    promptUser();
 };
 
 const updateRole = async ()=> {
